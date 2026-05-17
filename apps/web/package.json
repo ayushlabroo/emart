@@ -1,0 +1,11 @@
+{
+  "name": "@emart/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'web app not scaffolded yet — see Step 13'",
+    "build": "echo 'web app not scaffolded yet — see Step 13'",
+    "lint": "echo 'no lint configured yet'",
+    "type-check": "echo 'no type-check yet'"
+  }
+}
