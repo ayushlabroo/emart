@@ -1,0 +1,11 @@
+{
+  "name": "@emart/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'api not scaffolded yet — see Step 8'",
+    "build": "echo 'api not scaffolded yet — see Step 8'",
+    "lint": "echo 'no lint configured yet'",
+    "type-check": "echo 'no type-check yet'"
+  }
+}

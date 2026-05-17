@@ -1,0 +1,11 @@
+{
+  "name": "@emart/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'mobile app not scaffolded yet — see Step 36 (Phase 3)'",
+    "build": "echo 'mobile app not scaffolded yet — see Step 36 (Phase 3)'",
+    "lint": "echo 'no lint configured yet'",
+    "type-check": "echo 'no type-check yet'"
+  }
+}

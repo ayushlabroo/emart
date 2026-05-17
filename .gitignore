@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Turborepo
+.turbo/
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+# Only .env.example is committed (as a template)
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.idea/
+*.swp
+*.swo
+*~
+# Note: .vscode/ IS committed because we want team-shared settings
+
+# Testing
+coverage/
+.nyc_output/
+
+# Prisma (will matter from Step 6 onward)
+# Don't ignore the schema or migrations — those ARE source code
+# But do ignore the generated client output if it's outside node_modules
+
+# Expo / React Native (will matter from Step 36 onward)
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Misc
+*.tgz
+.cache/
