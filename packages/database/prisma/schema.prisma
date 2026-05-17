@@ -1,0 +1,58 @@
+// EMart database schema
+// Source of truth for the PostgreSQL schema.
+// Enums are MIRRORED from packages/types — keep them in sync.
+//
+// Note (Prisma 7): connection URLs live in prisma.config.ts, not here.
+// To apply changes:
+//   pnpm --filter @emart/database migrate:dev --name <description>
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// ============================================================
+// Enums — mirrored from packages/types/src/enums.ts
+// ============================================================
+
+enum UserRole {
+    CUSTOMER
+    STORE_MANAGER
+    ADMIN
+}
+
+enum OrderStatus {
+    PLACED
+    ACCEPTED
+    PICKED
+    PACKED
+    OUT_FOR_DELIVERY
+    DELIVERED
+    CANCELLED
+    RETURNED
+}
+
+enum ProductCategory {
+    GROCERY
+    GENERAL_MERCHANDISE
+    ELECTRONICS
+}
+
+// ============================================================
+// Models
+// ============================================================
+
+// Minimal User model — full schema design happens in Step 7.
+// This exists so Step 6 can verify the full pipeline end-to-end.
+model User {
+    id        String   @id @default(cuid())
+    email     String   @unique
+    role      UserRole @default(CUSTOMER)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("users")
+}
