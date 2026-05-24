@@ -1,58 +1,266 @@
-// EMart database schema
-// Source of truth for the PostgreSQL schema.
-// Enums are MIRRORED from packages/types — keep them in sync.
-//
-// Note (Prisma 7): connection URLs live in prisma.config.ts, not here.
-// To apply changes:
-//   pnpm --filter @emart/database migrate:dev --name <description>
-
 generator client {
     provider = "prisma-client-js"
+    output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
     provider = "postgresql"
 }
 
-// ============================================================
-// Enums — mirrored from packages/types/src/enums.ts
-// ============================================================
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
-enum UserRole {
+enum Role {
     CUSTOMER
-    STORE_MANAGER
+    MANAGER
     ADMIN
 }
 
 enum OrderStatus {
     PLACED
     ACCEPTED
-    PICKED
+    PICKING
     PACKED
     OUT_FOR_DELIVERY
     DELIVERED
     CANCELLED
-    RETURNED
 }
 
-enum ProductCategory {
-    GROCERY
-    GENERAL_MERCHANDISE
-    ELECTRONICS
+enum Units {
+    KG
+    EA
+    L
+    G
+    ML
 }
 
-// ============================================================
-// Models
-// ============================================================
+// ─── Auth / Identity ──────────────────────────────────────────────────────────
 
-// Minimal User model — full schema design happens in Step 7.
-// This exists so Step 6 can verify the full pipeline end-to-end.
 model User {
     id        String   @id @default(cuid())
     email     String   @unique
-    role      UserRole @default(CUSTOMER)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    phone     String   @unique
+    password  String
+    role      Role
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
 
+    customer Customer?
+    manager  Manager?
+
+    @@index([role])
     @@map("users")
+}
+
+// ─── Profiles ─────────────────────────────────────────────────────────────────
+
+model Customer {
+    id        String     @id @default(cuid())
+    userId    String     @unique @map("user_id")
+    name      String
+    photo     String?
+    user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    addresses Address[]
+    cartItems CartItem[]
+    orders    Order[]
+
+    @@map("customers")
+}
+
+model Manager {
+    id     String  @id @default(cuid())
+    userId String  @unique @map("user_id")
+    name   String
+    photo  String?
+    user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    stores Store[]
+
+    @@map("managers")
+}
+
+// ─── Address ──────────────────────────────────────────────────────────────────
+
+model Address {
+    id         String   @id @default(cuid())
+    line1      String
+    city       String
+    pincode    String
+    isDefault  Boolean  @default(false) @map("is_default")
+    customerId String   @map("customer_id")
+    customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+    @@index([customerId])
+    @@index([pincode])
+    @@map("addresses")
+}
+
+// ─── Catalog ──────────────────────────────────────────────────────────────────
+
+model Category {
+    id            String        @id @default(cuid())
+    name          String        @unique
+    photo         String?
+    isActive      Boolean       @default(true) @map("is_active")
+    subcategories Subcategory[]
+
+    @@index([isActive])
+    @@map("categories")
+}
+
+model Subcategory {
+    id         String    @id @default(cuid())
+    name       String
+    photo      String?
+    isActive   Boolean   @default(true) @map("is_active")
+    categoryId String    @map("category_id")
+    category   Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+    articles   Article[]
+
+    @@unique([categoryId, name])
+    @@index([categoryId])
+    @@map("subcategories")
+}
+
+model Article {
+    id          String  @id @default(cuid())
+    name        String
+    description String?
+    photo       String?
+    mrp         Decimal @db.Decimal(10, 2)
+    price       Decimal @db.Decimal(10, 2)
+    unit        Units
+    discount    Decimal @default(0) @db.Decimal(5, 2)
+    isActive    Boolean @default(true) @map("is_active")
+
+    // Category-specific data (grocery: expiry; electronics: warranty; GM: material)
+    attributes Json?
+
+    subcategoryId String      @map("subcategory_id")
+    subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
+
+    inventory  Inventory[]
+    cartItems  CartItem[]
+    orderItems OrderItem[]
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@index([subcategoryId])
+    @@index([isActive])
+    @@index([name])
+    @@map("articles")
+}
+
+// ─── Store & Inventory ────────────────────────────────────────────────────────
+
+model Store {
+    id       String  @id @default(cuid())
+    name     String
+    pincode  String
+    isActive Boolean @default(true) @map("is_active")
+
+    managerId String?  @map("manager_id")
+    manager   Manager? @relation(fields: [managerId], references: [id], onDelete: SetNull)
+
+    inventory  Inventory[]
+    orderItems OrderItem[]
+
+    @@index([pincode])
+    @@index([managerId])
+    @@index([isActive])
+    @@map("stores")
+}
+
+// One row per store-article pair. stock = units available.
+model Inventory {
+    storeId   String @map("store_id")
+    articleId String @map("article_id")
+    stock     Int    @default(0)
+
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+    article Article @relation(fields: [articleId], references: [id], onDelete: Restrict)
+
+    @@id([storeId, articleId])
+    @@index([articleId])
+    @@map("inventory")
+}
+
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+
+model CartItem {
+    id        String   @id @default(cuid())
+    qty       Int
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    customerId String   @map("customer_id")
+    customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+    articleId String  @map("article_id")
+    article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+    @@unique([customerId, articleId])
+    @@index([customerId])
+    @@map("cart_items")
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+model Order {
+    id     String      @id @default(cuid())
+    status OrderStatus @default(PLACED)
+
+    // Money totals — calculated at order time, never recalculated
+    subtotal    Decimal @db.Decimal(10, 2)
+    discount    Decimal @default(0) @db.Decimal(10, 2)
+    deliveryFee Decimal @default(0) @db.Decimal(10, 2)
+    tax         Decimal @default(0) @db.Decimal(10, 2)
+    total       Decimal @db.Decimal(10, 2)
+
+    // Delivery address snapshot (in case original address changes/deletes)
+    deliveryLine1   String @map("delivery_line1")
+    deliveryCity    String @map("delivery_city")
+    deliveryPincode String @map("delivery_pincode")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    customerId String   @map("customer_id")
+    customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+    items OrderItem[]
+
+    @@index([customerId])
+    @@index([status])
+    @@index([createdAt])
+    @@map("orders")
+}
+
+// Snapshot: fields are copied from Article at order time and never changed.
+// This protects order history if the product price/name changes later.
+model OrderItem {
+    id          String  @id @default(cuid())
+    articleName String  @map("article_name")
+    photo       String?
+    unit        Units
+    mrp         Decimal @db.Decimal(10, 2)
+    price       Decimal @db.Decimal(10, 2)
+    discount    Decimal @db.Decimal(5, 2)
+    qty         Int
+
+    orderId String @map("order_id")
+    order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+    articleId String  @map("article_id")
+    article   Article @relation(fields: [articleId], references: [id], onDelete: Restrict)
+
+    storeId String @map("store_id")
+    store   Store  @relation(fields: [storeId], references: [id], onDelete: Restrict)
+
+    @@index([orderId])
+    @@index([articleId])
+    @@index([storeId])
+    @@map("order_items")
 }
