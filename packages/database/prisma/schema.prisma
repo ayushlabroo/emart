@@ -11,7 +11,7 @@ datasource db {
 
 enum Role {
     CUSTOMER
-    MANAGER
+    STORE_MANAGER
     ADMIN
 }
 

@@ -18,14 +18,12 @@ export function errorHandler(
   let code: ApiErrorCode = "INTERNAL_ERROR";
   let message = "Kuch gadbad ho gayi. Thodi der baad koshish karein.";
 
-  // Kya ye HAMARA jaana-pehchana AppError hai? (jaise 404, 403)
   if (err instanceof AppError) {
     statusCode = err.statusCode;
     code = err.code;
-    message = err.message; // ye user ko dikhana safe hai (humne likha hai)
+    message = err.message;
   }
 
-  // Error ko LOG karo (yahaan asli wajah, stack ke saath)
   logger.error("Request fail hui", {
     method: req.method,
     url: req.originalUrl,

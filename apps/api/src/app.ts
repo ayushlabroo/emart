@@ -1,37 +1,36 @@
+import cookieParser from "cookie-parser";
 import cors from "cors";
-import express from "express";
-import rateLimit from "express-rate-limit";
+import express, { type Application } from "express";
 import helmet from "helmet";
 
-import { errorHandler } from "./middleware/error-handler.js";
-import routes from "./routes/index.js";
+import { env } from "./config/env";
+import { errorHandler } from "./middleware/error-handler";
+import { notFoundHandler } from "./middleware/not-found";
+import { apiRateLimiter } from "./middleware/rate-limit";
+import authRouter from "./routes/auth";
+import { healthRouter } from "./routes/health";
 
-const app = express();
+const app: Application = express();
 
 app.use(helmet());
 
 app.use(
   cors({
-    origin: true,
-    credentials: true,
+    origin: env.WEB_ORIGIN,
+    credentials: true, //
   }),
 );
 
-app.use(
-  express.json({
-    limit: "2mb",
-  }),
-);
+app.use(express.json({ limit: "100kb" }));
 
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 100,
-  }),
-);
+app.use(cookieParser());
 
-app.use("/api/v1", routes);
+app.use("/api", apiRateLimiter);
+app.use("/api/v1", healthRouter);
+app.use("/api/v1/auth", authRouter);
+
+app.use(notFoundHandler);
 
 app.use(errorHandler);
 
-export default app;
+export { app };

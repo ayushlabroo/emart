@@ -3,7 +3,7 @@ import { AppError } from "../errors/app-error";
 
 export function notFoundHandler(
   req: Request,
-  _res: Response, // _ prefix = "ye param yahaan use nahi ho raha"
+  _res: Response,
   next: NextFunction,
 ) {
   next(
