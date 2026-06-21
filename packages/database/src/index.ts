@@ -1,10 +1,10 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
-import { PrismaClient } from "../node_modules/.prisma/client";
+import { Prisma, PrismaClient } from "../node_modules/.prisma/client";
 
 const connectionString = `${process.env.DATABASE_URL}`;
 
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-export { prisma };
+export { prisma, Prisma };

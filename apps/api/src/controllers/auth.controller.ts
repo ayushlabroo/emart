@@ -1,18 +1,17 @@
 // apps/api/src/controllers/auth.controller.ts
-import { prisma, Prisma } from "@emart/database";
+import { prisma } from "@emart/database";
 import { UserRole } from "@emart/types";
 import type { Request, Response } from "express";
 import { AppError } from "../errors/app-error";
 import { setAuthCookies } from "../lib/cookies";
 import { signTokens } from "../lib/jwt";
 import { hashPassword, verifyPassword } from "../lib/password";
+import { isPrismaKnownError } from "../lib/prisma-error";
 
 // ─── REGISTER ──────────────────────────────────────────────
 export async function register(req: Request, res: Response) {
-  // validate middleware ne already check + clean kar diya hai.
   const { email, phone, password, name } = req.body;
 
-  // Plain password kabhi DB mein nahi — pehle hash. (9a wala, async hai.)
   const hashedPassword = await hashPassword(password);
 
   try {
@@ -42,10 +41,7 @@ export async function register(req: Request, res: Response) {
     });
   } catch (err) {
     // Email ya phone already exist → Prisma "P2002" unique-constraint error
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002"
-    ) {
+    if (isPrismaKnownError(err) && err.code === "P2002") {
       throw new AppError(
         "Email ya phone pehle se registered hai",
         409,

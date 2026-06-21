@@ -1,3 +1,5 @@
+// it acts like a filter that parse .env file through ZOD API schema object.
+
 import "dotenv/config";
 import { z } from "zod";
 
