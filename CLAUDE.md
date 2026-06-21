@@ -154,7 +154,7 @@ emart/
 
 ## 📍 CURRENT STATE (update this as we progress)
 
-**Step 9 complete. Next: Step 10 (Catalog API).**
+**Step 10 complete. Next: Step 11 (Cart API).**
 
 Done:
 
@@ -171,12 +171,16 @@ Done:
   tokens in DB, POST /auth/refresh (rotation), POST /auth/logout (revoke)
 - ✅ Step 9d — authenticate middleware (cookie + Bearer header), authorize(...roles)
   factory middleware, Express Request type extended with req.user
+- ✅ Step 10 — Catalog API: Category/Subcategory/Article CRUD (ADMIN only write,
+  public read), pagination + filtering, soft delete for articles, Zod query
+  validation via res.locals, 15 routes under /api/v1/catalog
 
-**Next — Step 10: Catalog API**
-- Category CRUD (ADMIN only)
-- Subcategory CRUD (ADMIN only)
-- Article CRUD (ADMIN only)
-- Public listing endpoints (GET /categories, GET /articles)
+**Next — Step 11: Cart API**
+- GET /cart (CUSTOMER — fetch active cart + items)
+- POST /cart/items (add item)
+- PATCH /cart/items/:id (update quantity)
+- DELETE /cart/items/:id (remove item)
+- DELETE /cart (clear cart)
 
 ### Resolved issues to remember
 
@@ -186,6 +190,13 @@ Done:
   in apps/api/src/lib/prisma-errors.ts (catch `err` is unknown; inline narrowing
   was flaky due to Prisma generated class type).
 - Express 5 auto-catches async rejections — no asyncHandler wrapper needed.
+- Express 5: `req.query` is getter-only — use `res.locals["query"]` to pass
+  parsed query params from validate middleware to controllers.
+- Express 5: `req.params[key]` type is `string | string[]` — always cast with
+  `req.params["id"] as string` in controllers.
+- Zod v4: `z.record()` requires 2 args — `z.record(z.string(), z.any())`.
+- Prisma article update: cast `data` as `Prisma.ArticleUncheckedUpdateInput`
+  when passing `subcategoryId` directly (FK vs relation type conflict).
 
 ### Stack
 
