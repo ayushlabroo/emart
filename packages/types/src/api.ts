@@ -17,4 +17,7 @@ export type ApiErrorCode =
   | "NOT_FOUND"
   | "VALIDATION_ERROR"
   | "RATE_LIMITED"
-  | "INTERNAL_ERROR";
+  | "INTERNAL_ERROR"
+  | "CART_EMPTY"
+  | "ITEM_UNAVAILABLE"
+  | "OUT_OF_STOCK";

@@ -154,7 +154,7 @@ emart/
 
 ## 📍 CURRENT STATE (update this as we progress)
 
-**Step 10 complete. Next: Step 11 (Cart API).**
+**Step 13 complete. Next: Step 14 (Store & Inventory Management API).**
 
 Done:
 
@@ -174,13 +174,22 @@ Done:
 - ✅ Step 10 — Catalog API: Category/Subcategory/Article CRUD (ADMIN only write,
   public read), pagination + filtering, soft delete for articles, Zod query
   validation via res.locals, 15 routes under /api/v1/catalog
+- ✅ Step 11 — Cart API: stateless cart (CartItem rows, no separate Cart model),
+  upsert on POST, ownership check via updateMany/deleteMany + count===0,
+  subtotal computed on GET, 5 routes under /api/v1/cart (CUSTOMER only)
+- ✅ Step 12 — Address API: CRUD + dedicated PATCH /:id/default, $transaction for
+  default swap (atomic — no race condition), delete-default auto-promotes oldest
+  remaining address, 5 routes under /api/v1/addresses (CUSTOMER only)
+- ✅ Step 13 — Order API: full checkout flow (validate cart → validate address →
+  find store per item → calculate totals → $transaction: create Order+OrderItems
+  snapshot + atomic inventory decrement with stock>=qty guard + clear cart),
+  listOrders (paginated), getOrder; CART_EMPTY / ITEM_UNAVAILABLE / OUT_OF_STOCK
+  error codes added to ApiErrorCode in @emart/types; 3 routes under /api/v1/orders
 
-**Next — Step 11: Cart API**
-- GET /cart (CUSTOMER — fetch active cart + items)
-- POST /cart/items (add item)
-- PATCH /cart/items/:id (update quantity)
-- DELETE /cart/items/:id (remove item)
-- DELETE /cart (clear cart)
+**Next — Step 14: Store & Inventory Management API**
+- CRUD for stores (ADMIN)
+- Inventory upsert per store-article pair (STORE_MANAGER — own store only)
+- GET /stores/:id/inventory (paginated stock list)
 
 ### Resolved issues to remember
 
@@ -197,6 +206,15 @@ Done:
 - Zod v4: `z.record()` requires 2 args — `z.record(z.string(), z.any())`.
 - Prisma article update: cast `data` as `Prisma.ArticleUncheckedUpdateInput`
   when passing `subcategoryId` directly (FK vs relation type conflict).
+- Ownership check pattern: use `updateMany`/`deleteMany` with `{ id, customerId }`
+  in WHERE (not `update`/`delete` which only accept unique fields). count===0 → 404.
+  Never 403 — don't leak ownership info to attackers.
+- $transaction two flavours: array `[op1, op2]` for sequential batch (no inter-op
+  deps); async callback `async (tx) => { ... }` when later ops depend on earlier
+  results. Throw inside callback = full rollback.
+- Inventory atomic decrement: inside $transaction use `updateMany` with
+  `stock: { gte: qty }` in WHERE. count===0 → throw → rollback (optimistic
+  concurrency — avoids oversell without SELECT FOR UPDATE).
 
 ### Stack
 

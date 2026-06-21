@@ -2,7 +2,10 @@
 import { prisma } from "@emart/database";
 import type { Request, Response } from "express";
 import { AppError } from "../errors/app-error";
-import type { CreateAddressInput, UpdateAddressInput } from "../validators/address";
+import type {
+  CreateAddressInput,
+  UpdateAddressInput,
+} from "../validators/address";
 
 // Cart controller jaisa hi — userId se customerId nikalo
 async function getCustomerId(userId: string): Promise<string> {
@@ -10,7 +13,8 @@ async function getCustomerId(userId: string): Promise<string> {
     where: { userId },
     select: { id: true },
   });
-  if (!customer) throw new AppError("Customer profile nahi mila", 404, "NOT_FOUND");
+  if (!customer)
+    throw new AppError("Customer profile nahi mila", 404, "NOT_FOUND");
   return customer.id;
 }
 
@@ -87,7 +91,8 @@ export async function updateAddress(req: Request, res: Response) {
       }),
     ]);
 
-    if (address.count === 0) throw new AppError("Address nahi mili", 404, "NOT_FOUND");
+    if (address.count === 0)
+      throw new AppError("Address nahi mili", 404, "NOT_FOUND");
 
     const updated = await prisma.address.findUnique({ where: { id } });
     return res.json({ success: true, data: { address: updated } });
@@ -99,7 +104,8 @@ export async function updateAddress(req: Request, res: Response) {
     data: body,
   });
 
-  if (result.count === 0) throw new AppError("Address nahi mili", 404, "NOT_FOUND");
+  if (result.count === 0)
+    throw new AppError("Address nahi mili", 404, "NOT_FOUND");
 
   const address = await prisma.address.findUnique({ where: { id } });
   res.json({ success: true, data: { address } });

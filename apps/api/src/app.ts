@@ -10,6 +10,7 @@ import { apiRateLimiter } from "./middleware/rate-limit";
 import { addressRouter } from "./routes/address";
 import authRouter from "./routes/auth";
 import { cartRouter } from "./routes/cart";
+import { orderRouter } from "./routes/order";
 import { catalogRouter } from "./routes/catalog";
 import { healthRouter } from "./routes/health";
 
@@ -34,6 +35,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/catalog", catalogRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/addresses", addressRouter);
+app.use("/api/v1/orders", orderRouter);
 
 app.use(notFoundHandler);
 
