@@ -45,11 +45,26 @@ model User {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    customer Customer?
-    manager  Manager?
+    customer       Customer?
+    manager        Manager?
+    refreshTokens  RefreshToken[]
 
     @@index([role])
     @@map("users")
+}
+
+model RefreshToken {
+    id        String   @id @default(cuid())
+    tokenHash String   @unique @map("token_hash")
+    userId    String   @map("user_id")
+    expiresAt DateTime @map("expires_at")
+    revoked   Boolean  @default(false)
+    createdAt DateTime @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@map("refresh_tokens")
 }
 
 // ─── Profiles ─────────────────────────────────────────────────────────────────
