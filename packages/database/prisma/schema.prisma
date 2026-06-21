@@ -23,6 +23,8 @@ enum OrderStatus {
     OUT_FOR_DELIVERY
     DELIVERED
     CANCELLED
+    RETURN_REQUESTED
+    RETURNED
 }
 
 enum Units {
@@ -31,6 +33,13 @@ enum Units {
     L
     G
     ML
+}
+
+enum PaymentStatus {
+    PENDING
+    PAID
+    FAILED
+    REFUNDED
 }
 
 // ─── Auth / Identity ──────────────────────────────────────────────────────────
@@ -224,8 +233,9 @@ model CartItem {
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 model Order {
-    id     String      @id @default(cuid())
-    status OrderStatus @default(PLACED)
+    id            String        @id @default(cuid())
+    status        OrderStatus   @default(PLACED)
+    paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
 
     // Money totals — calculated at order time, never recalculated
     subtotal    Decimal @db.Decimal(10, 2)
@@ -245,12 +255,34 @@ model Order {
     customerId String   @map("customer_id")
     customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
 
-    items OrderItem[]
+    items   OrderItem[]
+    payment Payment?
 
     @@index([customerId])
     @@index([status])
+    @@index([paymentStatus])
     @@index([createdAt])
     @@map("orders")
+}
+
+// Payment record — one per order.
+// amount is stored in paise (₹1 = 100 paise) — that's how Razorpay works.
+model Payment {
+    id                String        @id @default(cuid())
+    orderId           String        @unique @map("order_id")
+    razorpayOrderId   String        @unique @map("razorpay_order_id")
+    razorpayPaymentId String?       @unique @map("razorpay_payment_id")
+    razorpaySignature String?       @map("razorpay_signature")
+    amount            Int           // paise mein
+    currency          String        @default("INR")
+    status            PaymentStatus @default(PENDING)
+    createdAt         DateTime      @default(now()) @map("created_at")
+    updatedAt         DateTime      @updatedAt @map("updated_at")
+
+    order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+    @@index([status])
+    @@map("payments")
 }
 
 // Snapshot: fields are copied from Article at order time and never changed.

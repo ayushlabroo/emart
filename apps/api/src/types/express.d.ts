@@ -9,6 +9,9 @@ declare global {
         userId: string;
         role: UserRole;
       };
+      // Razorpay webhook signature verify karne ke liye raw bytes chahiye.
+      // express.json() ke verify callback mein set hota hai (app.ts).
+      rawBody?: Buffer;
     }
   }
 }

@@ -6,6 +6,7 @@ export enum UserRole {
 
 export enum OrderStatus {
   PLACED = "PLACED",
+  ACCEPTED = "ACCEPTED",
   PICKING = "PICKING",
   PACKED = "PACKED",
   OUT_FOR_DELIVERY = "OUT_FOR_DELIVERY",
@@ -19,4 +20,11 @@ export enum ProductCategory {
   GROCERY = "GROCERY",
   GENERAL_MERCHANDISE = "GENERAL_MERCHANDISE",
   ELECTRONICS = "ELECTRONICS",
+}
+
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  PAID = "PAID",
+  FAILED = "FAILED",
+  REFUNDED = "REFUNDED",
 }

@@ -18,6 +18,10 @@ const envSchema = z.object({
     .min(32, "JWT_REFRESH_SECRET should min 32 char"),
   JWT_ACCESS_TTL: z.string().default("15m"),
   JWT_REFRESH_TTL: z.string().default("7d"),
+
+  RAZORPAY_KEY_ID: z.string().min(1, "RAZORPAY_KEY_ID required"),
+  RAZORPAY_KEY_SECRET: z.string().min(1, "RAZORPAY_KEY_SECRET required"),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(1, "RAZORPAY_WEBHOOK_SECRET required"),
 });
 
 const parsed = envSchema.safeParse(process.env);

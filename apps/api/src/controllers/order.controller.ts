@@ -1,8 +1,9 @@
 // apps/api/src/controllers/order.controller.ts
 import { prisma } from "@emart/database";
+import { OrderStatus, UserRole } from "@emart/types";
 import type { Request, Response } from "express";
 import { AppError } from "../errors/app-error";
-import type { OrderQuery, PlaceOrderInput } from "../validators/order";
+import type { OrderQuery, PlaceOrderInput, UpdateStatusInput } from "../validators/order";
 
 async function getCustomerId(userId: string): Promise<string> {
   const customer = await prisma.customer.findUnique({
@@ -250,4 +251,145 @@ export async function getOrder(req: Request, res: Response) {
   if (!order) throw new AppError("Order nahi mila", 404, "NOT_FOUND");
 
   res.json({ success: true, data: { order } });
+}
+
+// ─── State Machine ─────────────────────────────────────────────────────────────
+//
+// State machine = ek map jo batata hai "is status se sirf yeh statuses pe ja sakte ho"
+// Jaise traffic signal: green → yellow → red. Yellow se seedha green nahi.
+//
+// STAFF_TRANSITIONS: STORE_MANAGER aur ADMIN ke liye valid moves
+//   PLACED        → ACCEPTED ya CANCELLED  (store ne order accept kiya ya reject)
+//   ACCEPTED      → PICKING ya CANCELLED   (packing start, ya abhi bhi cancel ho sakta)
+//   PICKING       → PACKED                 (items pack ho gaye)
+//   PACKED        → OUT_FOR_DELIVERY       (delivery boy ko de diya)
+//   OUT_FOR_DELIVERY → DELIVERED           (customer ko mil gaya)
+//   RETURN_REQUESTED → RETURNED            (return process complete)
+
+const STAFF_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  [OrderStatus.PLACED]:           [OrderStatus.ACCEPTED, OrderStatus.CANCELLED],
+  [OrderStatus.ACCEPTED]:         [OrderStatus.PICKING, OrderStatus.CANCELLED],
+  [OrderStatus.PICKING]:          [OrderStatus.PACKED],
+  [OrderStatus.PACKED]:           [OrderStatus.OUT_FOR_DELIVERY],
+  [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED],
+  [OrderStatus.RETURN_REQUESTED]: [OrderStatus.RETURNED],
+};
+
+// STORE_MANAGER ke liye: check karo ki is order mein unke store ke items hain
+async function verifyManagerOrderAccess(orderId: string, userId: string): Promise<void> {
+  // Manager ke saare stores dhundho
+  const manager = await prisma.manager.findUnique({
+    where: { userId },
+    select: { stores: { select: { id: true } } },
+  });
+  if (!manager) throw new AppError("Manager profile nahi mila", 404, "NOT_FOUND");
+
+  const storeIds = manager.stores.map((s) => s.id);
+
+  // Kya is order ka koi bhi item unke stores mein se aaya hai?
+  const item = await prisma.orderItem.findFirst({
+    where: { orderId, storeId: { in: storeIds } },
+    select: { id: true },
+  });
+
+  if (!item) throw new AppError("Is order mein tumhare store ke items nahi hain", 403, "FORBIDDEN");
+}
+
+// ─── PATCH /orders/:id/status ──────────────────────────────────────────────────
+
+export async function updateOrderStatus(req: Request, res: Response) {
+  const orderId = req.params["id"] as string;
+  const { status: newStatus } = req.body as UpdateStatusInput;
+
+  // STORE_MANAGER: sirf apne store ke orders update kar sakta hai
+  if (req.user!.role === UserRole.STORE_MANAGER) {
+    await verifyManagerOrderAccess(orderId, req.user!.userId);
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, status: true },
+  });
+  if (!order) throw new AppError("Order nahi mila", 404, "NOT_FOUND");
+
+  // State machine check — invalid transition reject karo
+  const validNext = STAFF_TRANSITIONS[order.status as OrderStatus] ?? [];
+  if (!validNext.includes(newStatus)) {
+    throw new AppError(
+      `"${order.status}" se "${newStatus}" mein nahi ja sakte`,
+      400,
+      "VALIDATION_ERROR",
+    );
+  }
+
+  const updated = await prisma.order.update({
+    where: { id: orderId },
+    data: { status: newStatus },
+    select: { id: true, status: true, updatedAt: true },
+  });
+
+  res.json({ success: true, data: { order: updated } });
+}
+
+// ─── POST /orders/:id/cancel ───────────────────────────────────────────────────
+//
+// Customer sirf tab cancel kar sakta hai jab order abhi process start nahi hua.
+// PLACED = store ne dekha hi nahi. ACCEPTED = store ne dekha hai, lekin abhi
+// picking shuru nahi hui — yahan tak cancel allow karte hain.
+
+export async function cancelOrder(req: Request, res: Response) {
+  const customerId = await getCustomerId(req.user!.userId);
+  const orderId = req.params["id"] as string;
+
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, customerId },
+    select: { id: true, status: true },
+  });
+  if (!order) throw new AppError("Order nahi mila", 404, "NOT_FOUND");
+
+  const cancellable: OrderStatus[] = [OrderStatus.PLACED, OrderStatus.ACCEPTED];
+  if (!cancellable.includes(order.status as OrderStatus)) {
+    throw new AppError(
+      `"${order.status}" orders cancel nahi ho sakte — sirf PLACED ya ACCEPTED cancel ho sakte hain`,
+      409,
+      "VALIDATION_ERROR",
+    );
+  }
+
+  const updated = await prisma.order.update({
+    where: { id: orderId },
+    data: { status: OrderStatus.CANCELLED },
+    select: { id: true, status: true, updatedAt: true },
+  });
+
+  res.json({ success: true, data: { order: updated } });
+}
+
+// ─── POST /orders/:id/return ───────────────────────────────────────────────────
+
+export async function requestReturn(req: Request, res: Response) {
+  const customerId = await getCustomerId(req.user!.userId);
+  const orderId = req.params["id"] as string;
+
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, customerId },
+    select: { id: true, status: true },
+  });
+  if (!order) throw new AppError("Order nahi mila", 404, "NOT_FOUND");
+
+  if (order.status !== OrderStatus.DELIVERED) {
+    throw new AppError(
+      "Sirf DELIVERED orders return ho sakte hain",
+      409,
+      "VALIDATION_ERROR",
+    );
+  }
+
+  const updated = await prisma.order.update({
+    where: { id: orderId },
+    data: { status: OrderStatus.RETURN_REQUESTED },
+    select: { id: true, status: true, updatedAt: true },
+  });
+
+  res.json({ success: true, data: { order: updated } });
 }

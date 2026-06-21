@@ -154,7 +154,7 @@ emart/
 
 ## 📍 CURRENT STATE (update this as we progress)
 
-**Step 13 complete. Next: Step 14 (Store & Inventory Management API).**
+**Step 15 complete. Next: Step 16 (TBD).**
 
 Done:
 
@@ -186,10 +186,24 @@ Done:
   listOrders (paginated), getOrder; CART_EMPTY / ITEM_UNAVAILABLE / OUT_OF_STOCK
   error codes added to ApiErrorCode in @emart/types; 3 routes under /api/v1/orders
 
-**Next — Step 14: Store & Inventory Management API**
-- CRUD for stores (ADMIN)
-- Inventory upsert per store-article pair (STORE_MANAGER — own store only)
-- GET /stores/:id/inventory (paginated stock list)
+- ✅ Step 14 — Store & Inventory API: Store CRUD (ADMIN, soft delete via isActive=false), inventory
+  upsert via Prisma `upsert` (STORE_MANAGER own store + ADMIN any store), ownership check via
+  Manager record lookup (userId → manager.id → store.managerId), 7 routes under /api/v1/stores
+
+- ✅ Step 15 — Order Status Management: state machine (PLACED→ACCEPTED→PICKING→PACKED→
+  OUT_FOR_DELIVERY→DELIVERED, RETURN_REQUESTED→RETURNED), STORE_MANAGER access via
+  manager.stores lookup, customer cancel (PLACED/ACCEPTED only), customer return (DELIVERED only);
+  RETURN_REQUESTED+RETURNED added to DB enum + migration; 3 routes added to /api/v1/orders
+
+- ✅ Step 16 — Payment API (Razorpay): PaymentStatus enum (PENDING/PAID/FAILED/REFUNDED),
+  Payment model (razorpayOrderId, razorpayPaymentId, amount in paise), paymentStatus on Order;
+  POST /payments/create-order (idempotent — returns existing PENDING order), POST /payments/verify
+  (HMAC-SHA256 signature verification, $transaction update Payment+Order), POST /payments/webhook
+  (rawBody signature verify via express.json verify callback, idempotent payment.captured handler);
+  rawBody captured in express.d.ts + app.ts; 3 routes under /api/v1/payments.
+  Pending: Razorpay test credentials to be added to .env before live testing.
+
+**Next — Step 17 (TBD)**
 
 ### Resolved issues to remember
 
@@ -215,6 +229,11 @@ Done:
 - Inventory atomic decrement: inside $transaction use `updateMany` with
   `stock: { gte: qty }` in WHERE. count===0 → throw → rollback (optimistic
   concurrency — avoids oversell without SELECT FOR UPDATE).
+- After schema change + migrate dev, always run `prisma generate` separately —
+  migrate dev does NOT auto-regenerate the client in all setups (Prisma 7 + PrismaPg).
+- Razorpay webhook signature: use rawBody (Buffer), not parsed JSON. Capture via
+  express.json() verify callback in app.ts → req.rawBody. Extended in express.d.ts.
+- Razorpay amount is in paise (₹1 = 100 paise). Use Math.round(total * 100).
 
 ### Stack
 
