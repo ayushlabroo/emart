@@ -1,0 +1,4 @@
+/* Tailwind ke teen layers — base (resets), components (classes), utilities (padding/margin/color etc) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

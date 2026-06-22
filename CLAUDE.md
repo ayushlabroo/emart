@@ -154,7 +154,7 @@ emart/
 
 ## 📍 CURRENT STATE (update this as we progress)
 
-**Step 15 complete. Next: Step 16 (TBD).**
+**Step 19a complete. Next: Step 19b (Axios instance + interceptors).**
 
 Done:
 
@@ -203,7 +203,32 @@ Done:
   rawBody captured in express.d.ts + app.ts; 3 routes under /api/v1/payments.
   Pending: Razorpay test credentials to be added to .env before live testing.
 
-**Next — Step 17 (TBD)**
+- ✅ Step 17 — Reviews & Ratings: Review model (@@unique([customerId, articleId]) DB-level duplicate block),
+  avgRating + reviewCount denormalized on Article (recomputed in $transaction after every write),
+  purchase verification (must have DELIVERED order for the article), aggregate queries (_avg, _count),
+  ALREADY_REVIEWED + NOT_PURCHASED error codes; 4 routes under /api/v1/reviews (POST/GET/PATCH/DELETE).
+
+- ✅ Step 18 — Product Search (Postgres Full-Text Search): GIN functional index on articles
+  (setweight tsvector: name=A, description=B), $queryRaw with Prisma.sql fragments for safe
+  parameterization, plainto_tsquery (user-input safe), ts_rank for relevance ordering,
+  optional categoryId filter, JOIN to subcategories+categories for breadcrumb data;
+  1 route GET /api/v1/search (public, no auth).
+
+**Step 19 — Web Frontend (Next.js App Router) — IN PROGRESS**
+
+- ✅ Step 19a — Scaffold: Next.js 14 (App Router), Tailwind CSS, TypeScript, ESLint; deps installed
+  (TanStack Query v5, Zustand v4, Axios, React Hook Form, Zod, @hookform/resolvers);
+  src/app/layout.tsx (root layout + metadata), src/app/page.tsx (homepage placeholder),
+  globals.css (Tailwind directives); port 3001; verified `GET / 200`.
+
+**Next — Step 19b: Axios instance + interceptors (attach accessToken, 401 → refresh → retry)**
+
+Remaining sub-steps:
+- Step 19b — Axios instance + interceptors
+- Step 19c — Login + Register pages (React Hook Form + Zod)
+- Step 19d — Providers (TanStack Query + Zustand cart store)
+- Step 19e — Homepage: search bar + category grid
+- Step 19f — Product detail page
 
 ### Resolved issues to remember
 
@@ -234,6 +259,10 @@ Done:
 - Razorpay webhook signature: use rawBody (Buffer), not parsed JSON. Capture via
   express.json() verify callback in app.ts → req.rawBody. Extended in express.d.ts.
 - Razorpay amount is in paise (₹1 = 100 paise). Use Math.round(total * 100).
+- Review ownership check: use findFirst({ id, customerId }) → 404 for both not-found and
+  wrong-owner cases (never 403 — don't leak existence to attackers).
+- recalculateRating() runs inside $transaction with every review write — pass the `tx`
+  client, not the global `prisma`, so the aggregate sees the just-written data.
 
 ### Stack
 

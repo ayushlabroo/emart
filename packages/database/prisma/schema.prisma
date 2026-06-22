@@ -87,6 +87,7 @@ model Customer {
     addresses Address[]
     cartItems CartItem[]
     orders    Order[]
+    reviews   Review[]
 
     @@map("customers")
 }
@@ -156,6 +157,11 @@ model Article {
     discount    Decimal @default(0) @db.Decimal(5, 2)
     isActive    Boolean @default(true) @map("is_active")
 
+    // Denormalized rating fields — recomputed after every review create/update/delete.
+    // Storing here avoids AVG() on every product listing query.
+    avgRating   Float @default(0) @map("avg_rating")
+    reviewCount Int   @default(0) @map("review_count")
+
     // Category-specific data (grocery: expiry; electronics: warranty; GM: material)
     attributes Json?
 
@@ -165,6 +171,7 @@ model Article {
     inventory  Inventory[]
     cartItems  CartItem[]
     orderItems OrderItem[]
+    reviews    Review[]
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
@@ -310,4 +317,25 @@ model OrderItem {
     @@index([articleId])
     @@index([storeId])
     @@map("order_items")
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+
+model Review {
+    id      String  @id @default(cuid())
+    rating  Int     // 1–5
+    comment String?
+
+    customerId String   @map("customer_id")
+    articleId  String   @map("article_id")
+    createdAt  DateTime @default(now()) @map("created_at")
+    updatedAt  DateTime @updatedAt @map("updated_at")
+
+    customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    article  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+    // DB level pe guarantee: ek customer ek article ke liye sirf ek review
+    @@unique([customerId, articleId])
+    @@index([articleId])
+    @@map("reviews")
 }

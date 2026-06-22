@@ -15,6 +15,8 @@ import { catalogRouter } from "./routes/catalog";
 import { healthRouter } from "./routes/health";
 import { storeRouter } from "./routes/store";
 import { paymentRouter } from "./routes/payment";
+import { reviewRouter } from "./routes/review";
+import { searchRouter } from "./routes/search";
 
 const app: Application = express();
 
@@ -50,6 +52,8 @@ app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/stores", storeRouter);
 app.use("/api/v1/payments", paymentRouter);
+app.use("/api/v1/reviews", reviewRouter);
+app.use("/api/v1/search", searchRouter);
 
 app.use(notFoundHandler);
 

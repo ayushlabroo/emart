@@ -17,16 +17,14 @@ const UNITS = ["KG", "EA", "L", "G", "ML"] as const;
 export const createCategorySchema = z.object({
   name: z.string().min(1, "Naam zaroori hai").max(100),
   // photo ek URL string hai — upload step baad mein aayega, abhi URL directly denge
-  photo: z.string().url("Photo ka sahi URL daalo").optional(),
+  photo: z.url("Photo ka sahi URL daalo").optional(),
 });
 
 // .partial() — createCategorySchema ke sare fields optional kar deta hai
 // Matlab PATCH mein client sirf wahi field bheje jo update karni hai
-export const updateCategorySchema = createCategorySchema
-  .partial()
-  .extend({
-    isActive: z.boolean().optional(), // ADMIN category band/chalu kar sake
-  });
+export const updateCategorySchema = createCategorySchema.partial().extend({
+  isActive: z.boolean().optional(), // ADMIN category band/chalu kar sake
+});
 
 export const categoryQuerySchema = paginationSchema;
 
@@ -40,7 +38,7 @@ export const createSubcategorySchema = z.object({
 
 export const updateSubcategorySchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  photo: z.string().url().optional(),
+  photo: z.url().optional(),
   isActive: z.boolean().optional(),
 });
 
