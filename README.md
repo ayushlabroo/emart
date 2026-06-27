@@ -37,6 +37,33 @@ pnpm install       # installs all workspaces
 pnpm dev           # starts all apps in dev mode
 \`\`\`
 
+## Seed data & test accounts
+
+Self-registration (`/register`) always creates a **CUSTOMER** — you cannot
+sign up as an admin (security by design). Create the admin via the seed script:
+
+```bash
+pnpm --filter @emart/api seed:admin
+# override defaults:
+# ADMIN_EMAIL=you@emart.com ADMIN_PASSWORD=Secret@123 pnpm --filter @emart/api seed:admin
+```
+
+### Default admin credentials (local dev only)
+
+| Field    | Value             |
+| -------- | ----------------- |
+| Email    | `admin@emart.com` |
+| Password | `Admin@12345`     |
+| Role     | `ADMIN`           |
+
+> ⚠️ Local development only — never use these in production.
+
+**Notes**
+- Admin is for catalog/store management via the API (Bearer token). The web app
+  has no admin UI yet.
+- `cart` / `checkout` / `orders` are **CUSTOMER-only** routes — to test the
+  shopping flow, register a normal customer at `/register`.
+
 ## Status
 
 Currently building. See the roadmap for phase progress.

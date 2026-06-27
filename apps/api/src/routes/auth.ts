@@ -1,9 +1,9 @@
 // apps/api/src/routes/auth.ts
 import { Router } from "express";
-import type { Request, Response } from "express";
 import {
   login,
   logout,
+  me,
   refresh,
   register,
 } from "../controllers/auth.controller";
@@ -18,10 +18,8 @@ router.post("/login", validate(loginSchema), login);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
 
-// "kaun hoon main?" — logged-in koi bhi user
-router.get("/me", authenticate, (req: Request, res: Response) => {
-  res.json({ success: true, data: { user: req.user } });
-});
+// "kaun hoon main?" — logged-in koi bhi user (name + email bhi DB se aata hai)
+router.get("/me", authenticate, me);
 
 
 export default router;

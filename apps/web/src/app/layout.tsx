@@ -1,7 +1,8 @@
-// layout.tsx = har page ke around ka wrapper
+// layout.tsx = har page ke around ka wrapper (Server Component — hooks nahi chal sakte)
 // Metadata = browser tab ka title + description (Next.js automatically <head> mein inject karta hai)
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "EMart",
@@ -16,7 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900 antialiased">{children}</body>
+      {/* Providers ke andar: TanStack Query + auth session restore */}
+      <body className="bg-gray-50 text-gray-900 antialiased">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

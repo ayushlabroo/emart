@@ -33,7 +33,7 @@ export const categoryQuerySchema = paginationSchema;
 export const createSubcategorySchema = z.object({
   name: z.string().min(1, "Naam zaroori hai").max(100),
   categoryId: z.string().min(1, "categoryId zaroori hai"),
-  photo: z.string().url("Photo ka sahi URL daalo").optional(),
+  photo: z.url("Photo ka sahi URL daalo").optional(),
 });
 
 export const updateSubcategorySchema = z.object({
@@ -52,7 +52,7 @@ export const subcategoryQuerySchema = paginationSchema.extend({
 export const createArticleSchema = z.object({
   name: z.string().min(1, "Article naam zaroori hai").max(200),
   description: z.string().max(1000).optional(),
-  photo: z.string().url("Photo ka sahi URL daalo").optional(),
+  photo: z.url("Photo ka sahi URL daalo").optional(),
   mrp: z.number().positive("MRP positive hona chahiye"),
   price: z.number().positive("Price positive hona chahiye"),
   unit: z.enum(UNITS, { error: "Sahi unit daalo: KG, EA, L, G, ML" }),

@@ -154,7 +154,7 @@ emart/
 
 ## 📍 CURRENT STATE (update this as we progress)
 
-**Step 19a complete. Next: Step 19b (Axios instance + interceptors).**
+**Step 19 COMPLETE (full web frontend). Next: Step 20 (DB migrate Neon → AWS RDS).**
 
 Done:
 
@@ -221,14 +221,55 @@ Done:
   src/app/layout.tsx (root layout + metadata), src/app/page.tsx (homepage placeholder),
   globals.css (Tailwind directives); port 3001; verified `GET / 200`.
 
-**Next — Step 19b: Axios instance + interceptors (attach accessToken, 401 → refresh → retry)**
+- ✅ Step 19b — Axios instance + interceptors: src/lib/axios.ts — in-memory accessToken
+  (setAccessToken/getAccessToken exports), base instance (baseURL from NEXT_PUBLIC_API_URL,
+  withCredentials:true), request interceptor (attach Bearer token), response interceptor
+  (401 → /auth/refresh → retry with queue to handle concurrent 401s), redirect to /login on
+  refresh failure; apps/web/.env.local with NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1.
 
-Remaining sub-steps:
-- Step 19b — Axios instance + interceptors
-- Step 19c — Login + Register pages (React Hook Form + Zod)
-- Step 19d — Providers (TanStack Query + Zustand cart store)
-- Step 19e — Homepage: search bar + category grid
-- Step 19f — Product detail page
+- ✅ Step 19c — Login + Register pages: src/lib/validators/auth.ts (Zod schemas + inferred types),
+  src/app/login/page.tsx, src/app/register/page.tsx — React Hook Form + zodResolver, server error
+  display, isSubmitting loading state, setAccessToken on success, router.push("/") redirect,
+  Link between pages. Zod pinned to 3.23.8 + @hookform/resolvers pinned to 3.9.0 (3.25.x broke
+  Schema type compat). WEB_ORIGIN in apps/api/.env fixed to http://localhost:3001 (was 3000).
+
+- ✅ Step 19d — Providers + state stores: lib/store/auth.ts (Zustand: user/setUser/clearUser),
+  lib/store/cart.ts (count/setCount for navbar badge), components/providers.tsx ("use client"
+  wrapper: QueryClientProvider with browser-singleton QueryClient + AuthHydrator that silently
+  POST /auth/refresh → setAccessToken → GET /auth/me → setUser on page load, useRef guard for
+  React 18 StrictMode double-effect, raw axios for refresh to avoid interceptor loop); layout.tsx
+  wrapped in <Providers>; login/register pages call useAuthStore.getState().setUser(data.data.user);
+  API: auth.controller.ts `me()` (DB fetch name+email+role, not just JWT payload), wired into
+  GET /auth/me route (was inline handler returning req.user).
+
+- ✅ Step 19e — Homepage: lib/api/catalog.ts (data layer: Category type, Paginated<T>, getCategories
+  returns items[]); components/home/Header.tsx (auth-store greeting + cart badge, Zustand selector
+  pattern), SearchBar.tsx (controlled input → router.push /search?q= with encodeURIComponent),
+  CategoryGrid.tsx (FIRST useQuery: queryKey ["categories"] + queryFn getCategories, 4 states
+  loading-skeleton/error/empty/success, photo-or-initial fallback, Links to /category/:id);
+  app/page.tsx composes them (stays Server Component). Verified GET / 200 + new content rendered.
+
+- ✅ Step 19f–19k — Full shopping flow (one batch). API data layer: lib/api/{catalog,cart,
+  address,order,payment,review,error}.ts (typed fetch fns, ProductLike shared shape, Decimal→string).
+  Hooks: hooks/useCart.ts (useQuery enabled:!!user + count sync to cart store), hooks/usePayment.ts
+  (Razorpay: loadScript → createPaymentOrder → checkout → verifyPayment → invalidate). UI kit:
+  components/ui/{Button,Spinner,EmptyState,RatingStars}.tsx + lib/{cn,format,orderStatus}.ts +
+  lib/razorpay.ts (typed window.Razorpay). Shared: ProductCard, AddToCartButton (FIRST useMutation,
+  stepper, invalidate cart), RequireAuth (waits auth `hydrated` flag before redirect), CartSync,
+  PageShell, Header (logout + cart badge). Pages: /category/[id], /subcategory/[id], /search
+  (Suspense-wrapped useSearchParams), /product/[id] (detail + reviews + write-review mutation),
+  /cart, /checkout (address select/add + place order + Razorpay), /orders, /orders/[id]
+  (cancel/return/pay-now). Auth store gained `hydrated`/`setHydrated`; AuthHydrator sets it in
+  finally. Verified: `next build` clean (12 routes, lint+types pass) + all routes GET 200.
+  Pending live test: API server (4000) + Razorpay test keys for end-to-end cart→pay flow.
+
+Web frontend conventions established (Step 19):
+- API calls ONLY in lib/api/* (never inside components). Each fn returns the unwrapped payload.
+- useQuery for reads, useMutation + queryClient.invalidateQueries for writes.
+- Protected pages: wrap inner content in <RequireAuth> (waits for auth `hydrated`).
+- Money: prices arrive as strings (Prisma Decimal → JSON). Use formatINR() from lib/format.
+- Dynamic route params via useParams<{id:string}>(); search params need a <Suspense> boundary.
+- Razorpay amount is paise; keyId is public, secret never reaches client.
 
 ### Resolved issues to remember
 

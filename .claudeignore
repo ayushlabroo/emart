@@ -1,11 +1,21 @@
-{
-  "permissions": {
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(*.pem)",
-      "Read(*.key)",
-      "Read(~/.ssh/**)"
-    ]
-  }
-}
+# emart/.claudeignore
+
+# Saare environment files — har level pe
+
+.env
+.env._
+**/.env
+**/.env._
+
+# Secrets / keys agar kabhi local rakhe
+
+_.pem
+_.key
+secrets/
+
+# Build output (waise bhi padhne ki zarurat nahi)
+
+node_modules/
+dist/
+.next/
+.turbo/

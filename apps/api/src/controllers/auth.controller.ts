@@ -157,6 +157,36 @@ export async function refresh(req: Request, res: Response) {
   });
 }
 
+// ─── ME ────────────────────────────────────────────────────
+// JWT mein sirf userId + role hota hai. Name + email ke liye DB hit zaroori hai.
+export async function me(req: Request, res: Response) {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      customer: { select: { name: true } },
+    },
+  });
+
+  if (!user) {
+    throw new AppError("User nahi mila", 404, "NOT_FOUND");
+  }
+
+  res.json({
+    success: true,
+    data: {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.customer?.name ?? null,
+      },
+    },
+  });
+}
+
 // ─── LOGOUT ────────────────────────────────────────────────
 export async function logout(req: Request, res: Response) {
   const token: string | undefined = req.cookies.refreshToken;

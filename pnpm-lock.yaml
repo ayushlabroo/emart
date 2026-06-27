@@ -96,8 +96,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/types
       '@hookform/resolvers':
-        specifier: ^3.9.0
-        version: 3.10.0(react-hook-form@7.80.0(react@18.3.1))
+        specifier: 3.9.0
+        version: 3.9.0(react-hook-form@7.80.0(react@18.3.1))
       '@tanstack/react-query':
         specifier: ^5.56.2
         version: 5.101.0(react@18.3.1)
@@ -120,8 +120,8 @@ importers:
         specifier: ^7.53.0
         version: 7.80.0(react@18.3.1)
       zod:
-        specifier: ^3.23.8
-        version: 3.25.76
+        specifier: 3.23.8
+        version: 3.23.8
       zustand:
         specifier: ^4.5.5
         version: 4.5.7(@types/react@18.3.31)(react@18.3.1)
@@ -413,8 +413,8 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@hookform/resolvers@3.10.0':
-    resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
+  '@hookform/resolvers@3.9.0':
+    resolution: {integrity: sha512-bU0Gr4EepJ/EQsH/IwEzYLsT/PEj5C0ynLQ4m+GSHS+xKH4TfSelhluTgOaoc4kA5s7eCsQbM4wvZLzELmWzUg==}
     peerDependencies:
       react-hook-form: ^7.0.0
 
@@ -3065,8 +3065,8 @@ packages:
   zeptomatch@2.1.0:
     resolution: {integrity: sha512-KiGErG2J0G82LSpniV0CtIzjlJ10E04j02VOudJsPyPwNZgGnRKQy7I1R7GMyg/QswnE4l7ohSGrQbQbjXPPDA==}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+  zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
 
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
@@ -3229,7 +3229,7 @@ snapshots:
     dependencies:
       hono: 4.12.19
 
-  '@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.3.1))':
+  '@hookform/resolvers@3.9.0(react-hook-form@7.80.0(react@18.3.1))':
     dependencies:
       react-hook-form: 7.80.0(react@18.3.1)
 
@@ -6197,7 +6197,7 @@ snapshots:
       grammex: 3.1.12
       graphmatch: 1.1.1
 
-  zod@3.25.76: {}
+  zod@3.23.8: {}
 
   zod@4.4.3: {}
 

@@ -1,12 +1,34 @@
 // page.tsx at root = localhost:3001/
-// Ye abhi placeholder hai — Step 19e mein real homepage banayenge
+// Yeh Server Component hai (koi hook nahi) — sirf client components compose karta hai.
+// Header / SearchBar / CategoryGrid apne andar "use client" hain — interactivity wahan.
+import { Header } from "@/components/home/Header";
+import { SearchBar } from "@/components/home/SearchBar";
+import { CategoryGrid } from "@/components/home/CategoryGrid";
+
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-green-600">EMart</h1>
-        <p className="mt-2 text-gray-500">Your neighbourhood dark store</p>
-        <p className="mt-4 text-sm text-gray-400">Step 19 — scaffold complete ✓</p>
+    <main className="min-h-screen">
+      <Header />
+
+      <div className="mx-auto max-w-5xl px-4 py-8 space-y-8">
+        {/* Hero + search */}
+        <section className="space-y-3">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Minutes mein delivery 🛵
+          </h1>
+          <p className="text-sm text-gray-500">
+            Apne aas-paas ke dark store se groceries order karo.
+          </p>
+          <SearchBar />
+        </section>
+
+        {/* Categories */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Categories
+          </h2>
+          <CategoryGrid />
+        </section>
       </div>
     </main>
   );
